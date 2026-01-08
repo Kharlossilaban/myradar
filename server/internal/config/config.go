@@ -48,7 +48,10 @@ type Config struct {
 	// Optional - Gemini AI
 	GeminiAPIKey string
 
-	// Optional - SMTP Email
+	// Optional - Resend Email
+	ResendAPIKey string
+
+	// Optional - SMTP Email (Legacy - kept for backward compatibility)
 	SMTPHost      string
 	SMTPPort      string
 	SMTPUsername  string
@@ -121,7 +124,10 @@ func Load() error {
 
 		GeminiAPIKey: getEnv("GEMINI_API_KEY", ""),
 
-		// SMTP Email Configuration
+		// Resend Email Configuration
+		ResendAPIKey: getEnv("RESEND_API_KEY", ""),
+
+		// SMTP Email Configuration (Legacy - kept for backward compatibility)
 		SMTPHost:      getEnv("SMTP_HOST", "smtp.gmail.com"),
 		SMTPPort:      getEnv("SMTP_PORT", "587"),
 		SMTPUsername:  getEnv("SMTP_USERNAME", ""),

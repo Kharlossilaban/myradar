@@ -2,46 +2,43 @@ package services
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"html/template"
 	"log"
-	"net/smtp"
-	"strconv"
 
+	"github.com/resendlabs/resend-go/v2"
 	"github.com/workradar/server/internal/config"
 )
 
 // EmailService handles all email sending operations
 type EmailService struct {
-	host      string
-	port      string
-	username  string
-	password  string
-	fromName  string
-	fromEmail string
+	resendClient *resend.Client
+	fromEmail    string
+	fromName     string
+	apiKey       string
 }
 
 // NewEmailService creates a new email service instance
 func NewEmailService() *EmailService {
+	apiKey := config.AppConfig.ResendAPIKey
 	return &EmailService{
-		host:      config.AppConfig.SMTPHost,
-		port:      config.AppConfig.SMTPPort,
-		username:  config.AppConfig.SMTPUsername,
-		password:  config.AppConfig.SMTPPassword,
-		fromName:  config.AppConfig.SMTPFromName,
-		fromEmail: config.AppConfig.SMTPFromEmail,
+		resendClient: resend.NewClient(apiKey),
+		fromEmail:    config.AppConfig.SMTPFromEmail,
+		fromName:     config.AppConfig.SMTPFromName,
+		apiKey:       apiKey,
 	}
 }
 
-// IsConfigured checks if SMTP is properly configured
+// IsConfigured checks if Resend API is properly configured
 func (s *EmailService) IsConfigured() bool {
-	return s.username != "" && s.password != ""
+	return s.apiKey != ""
 }
 
 // SendVerificationCode sends password reset verification code via email
 func (s *EmailService) SendVerificationCode(toEmail, code string) error {
 	if !s.IsConfigured() {
-		log.Println("⚠️ SMTP not configured, skipping email send")
+		log.Println("⚠️ Resend API not configured, skipping email send")
 		return nil // Return nil untuk development mode
 	}
 
@@ -144,14 +141,14 @@ func (s *EmailService) SendVerificationCode(toEmail, code string) error {
 		return fmt.Errorf("failed to execute email template: %w", err)
 	}
 
-	// Send email
-	return s.sendHTML(toEmail, subject, body.String())
+	// Send email via Resend
+	return s.sendViaResend(toEmail, subject, body.String())
 }
 
 // SendWelcomeEmail sends welcome email to new users
 func (s *EmailService) SendWelcomeEmail(toEmail, userName string) error {
 	if !s.IsConfigured() {
-		log.Println("⚠️ SMTP not configured, skipping welcome email")
+		log.Println("⚠️ Resend API not configured, skipping welcome email")
 		return nil
 	}
 
@@ -224,13 +221,13 @@ func (s *EmailService) SendWelcomeEmail(toEmail, userName string) error {
 		return fmt.Errorf("failed to execute welcome template: %w", err)
 	}
 
-	return s.sendHTML(toEmail, subject, body.String())
+	return s.sendViaResend(toEmail, subject, body.String())
 }
 
 // SendVIPUpgradeEmail sends confirmation email after VIP upgrade
 func (s *EmailService) SendVIPUpgradeEmail(toEmail, userName, plan string) error {
 	if !s.IsConfigured() {
-		log.Println("⚠️ SMTP not configured, skipping VIP upgrade email")
+		log.Println("⚠️ Resend API not configured, skipping VIP upgrade email")
 		return nil
 	}
 
@@ -306,41 +303,26 @@ func (s *EmailService) SendVIPUpgradeEmail(toEmail, userName, plan string) error
 		return fmt.Errorf("failed to execute VIP template: %w", err)
 	}
 
-	return s.sendHTML(toEmail, subject, body.String())
+	return s.sendViaResend(toEmail, subject, body.String())
 }
 
-// sendHTML sends an HTML email using SMTP
-func (s *EmailService) sendHTML(to, subject, htmlBody string) error {
-	// Construct email headers
-	headers := make(map[string]string)
-	headers["From"] = fmt.Sprintf("%s <%s>", s.fromName, s.fromEmail)
-	headers["To"] = to
-	headers["Subject"] = subject
-	headers["MIME-Version"] = "1.0"
-	headers["Content-Type"] = "text/html; charset=UTF-8"
+// sendViaResend sends an HTML email using Resend API
+func (s *EmailService) sendViaResend(to, subject, htmlBody string) error {
+	ctx := context.Background()
 
-	// Build message
-	var message bytes.Buffer
-	for k, v := range headers {
-		message.WriteString(fmt.Sprintf("%s: %s\r\n", k, v))
+	req := &resend.SendEmailRequest{
+		From:    fmt.Sprintf("%s <%s>", s.fromName, s.fromEmail),
+		To:      []string{to},
+		Subject: subject,
+		Html:    htmlBody,
 	}
-	message.WriteString("\r\n")
-	message.WriteString(htmlBody)
 
-	// SMTP authentication
-	auth := smtp.PlainAuth("", s.username, s.password, s.host)
-
-	// Parse port
-	port, _ := strconv.Atoi(s.port)
-	addr := fmt.Sprintf("%s:%d", s.host, port)
-
-	// Send email
-	err := smtp.SendMail(addr, auth, s.fromEmail, []string{to}, message.Bytes())
+	sent, err := s.resendClient.Emails.Send(ctx, req)
 	if err != nil {
-		log.Printf("❌ Failed to send email to %s: %v", to, err)
+		log.Printf("❌ Failed to send email to %s via Resend: %v", to, err)
 		return fmt.Errorf("failed to send email: %w", err)
 	}
 
-	log.Printf("✅ Email sent successfully to %s", to)
+	log.Printf("✅ Email sent successfully to %s (ID: %s)", to, sent.Id)
 	return nil
 }
