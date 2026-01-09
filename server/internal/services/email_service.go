@@ -34,16 +34,16 @@ func (s *EmailService) IsConfigured() bool {
 	return s.apiKey != ""
 }
 
-// SendVerificationCode sends password reset verification code via email
-func (s *EmailService) SendVerificationCode(toEmail, code string) error {
+// SendPasswordResetCode sends password reset verification code via email (6 digits)
+func (s *EmailService) SendPasswordResetCode(toEmail, code string) error {
 	if !s.IsConfigured() {
 		log.Println("⚠️ Resend API not configured, skipping email send")
 		return nil // Return nil untuk development mode
 	}
 
-	subject := "Workradar - Kode Verifikasi Reset Password"
+	subject := "Workradar - Kode Reset Password"
 
-	// HTML email template
+	// HTML email template for PASSWORD RESET
 	htmlTemplate := `
 <!DOCTYPE html>
 <html>
@@ -56,14 +56,14 @@ func (s *EmailService) SendVerificationCode(toEmail, code string) error {
         <tr>
             <td align="center">
                 <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.1);">
-                    <!-- Header -->
+                    <!-- Header - RED for Password Reset -->
                     <tr>
-                        <td style="background: linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%); padding: 40px; border-radius: 16px 16px 0 0; text-align: center;">
+                        <td style="background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%); padding: 40px; border-radius: 16px 16px 0 0; text-align: center;">
                             <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: 700;">
-                                📋 Workradar
+                                🔐 Reset Password
                             </h1>
                             <p style="color: rgba(255,255,255,0.9); margin: 10px 0 0 0; font-size: 14px;">
-                                Task Management & Productivity App
+                                Workradar - Task Management App
                             </p>
                         </td>
                     </tr>
@@ -72,19 +72,19 @@ func (s *EmailService) SendVerificationCode(toEmail, code string) error {
                     <tr>
                         <td style="padding: 40px;">
                             <h2 style="color: #1f2937; margin: 0 0 20px 0; font-size: 22px;">
-                                Reset Password
+                                Lupa Password?
                             </h2>
                             <p style="color: #6b7280; line-height: 1.6; margin: 0 0 30px 0;">
                                 Kami menerima permintaan untuk reset password akun Workradar Anda. 
-                                Gunakan kode verifikasi di bawah ini untuk melanjutkan:
+                                Gunakan kode 6 digit di bawah ini:
                             </p>
                             
-                            <!-- Verification Code Box -->
-                            <div style="background: linear-gradient(135deg, #EEF2FF 0%, #E0E7FF 100%); border-radius: 12px; padding: 30px; text-align: center; margin: 0 0 30px 0;">
-                                <p style="color: #6366F1; font-size: 14px; margin: 0 0 10px 0; text-transform: uppercase; letter-spacing: 1px;">
-                                    Kode Verifikasi
+                            <!-- Verification Code Box - 6 DIGITS -->
+                            <div style="background: linear-gradient(135deg, #FEE2E2 0%, #FECACA 100%); border-radius: 12px; padding: 30px; text-align: center; margin: 0 0 30px 0; border: 2px solid #EF4444;">
+                                <p style="color: #DC2626; font-size: 14px; margin: 0 0 10px 0; text-transform: uppercase; letter-spacing: 1px;">
+                                    Kode Reset Password (6 Digit)
                                 </p>
-                                <h1 style="color: #4F46E5; font-size: 42px; letter-spacing: 8px; margin: 0; font-weight: 700;">
+                                <h1 style="color: #B91C1C; font-size: 48px; letter-spacing: 12px; margin: 0; font-weight: 700; font-family: monospace;">
                                     {{.Code}}
                                 </h1>
                             </div>
@@ -142,6 +142,124 @@ func (s *EmailService) SendVerificationCode(toEmail, code string) error {
 
 	// Send email via Resend
 	return s.sendViaResend(toEmail, subject, body.String())
+}
+
+// SendAccountVerificationCode sends account verification code via email (4 digits)
+func (s *EmailService) SendAccountVerificationCode(toEmail, code string) error {
+	if !s.IsConfigured() {
+		log.Println("⚠️ Resend API not configured, skipping email send")
+		return nil // Return nil untuk development mode
+	}
+
+	subject := "Workradar - Verifikasi Akun Anda"
+
+	// HTML email template for ACCOUNT VERIFICATION
+	htmlTemplate := `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f5f5f5;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f5f5f5; padding: 40px 0;">
+        <tr>
+            <td align="center">
+                <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.1);">
+                    <!-- Header - PURPLE for Account Verification -->
+                    <tr>
+                        <td style="background: linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%); padding: 40px; border-radius: 16px 16px 0 0; text-align: center;">
+                            <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: 700;">
+                                ✉️ Verifikasi Email
+                            </h1>
+                            <p style="color: rgba(255,255,255,0.9); margin: 10px 0 0 0; font-size: 14px;">
+                                Workradar - Task Management App
+                            </p>
+                        </td>
+                    </tr>
+                    
+                    <!-- Content -->
+                    <tr>
+                        <td style="padding: 40px;">
+                            <h2 style="color: #1f2937; margin: 0 0 20px 0; font-size: 22px;">
+                                Selamat Datang! 🎉
+                            </h2>
+                            <p style="color: #6b7280; line-height: 1.6; margin: 0 0 30px 0;">
+                                Terima kasih telah mendaftar di Workradar! 
+                                Masukkan kode 4 digit di bawah ini untuk memverifikasi email Anda:
+                            </p>
+                            
+                            <!-- Verification Code Box - 4 DIGITS -->
+                            <div style="background: linear-gradient(135deg, #EEF2FF 0%, #E0E7FF 100%); border-radius: 12px; padding: 30px; text-align: center; margin: 0 0 30px 0; border: 2px solid #6366F1;">
+                                <p style="color: #6366F1; font-size: 14px; margin: 0 0 10px 0; text-transform: uppercase; letter-spacing: 1px;">
+                                    Kode Verifikasi (4 Digit)
+                                </p>
+                                <h1 style="color: #4F46E5; font-size: 56px; letter-spacing: 16px; margin: 0; font-weight: 700; font-family: monospace;">
+                                    {{.Code}}
+                                </h1>
+                            </div>
+                            
+                            <!-- Warning -->
+                            <div style="background-color: #FEF3C7; border-left: 4px solid #F59E0B; padding: 15px; border-radius: 0 8px 8px 0; margin: 0 0 30px 0;">
+                                <p style="color: #92400E; margin: 0; font-size: 14px;">
+                                    ⚠️ <strong>Penting:</strong> Kode ini akan kadaluarsa dalam <strong>2 menit</strong>. 
+                                    Jangan bagikan kode ini kepada siapapun.
+                                </p>
+                            </div>
+                            
+                            <p style="color: #6b7280; line-height: 1.6; margin: 0;">
+                                Jika Anda tidak membuat akun di Workradar, abaikan email ini.
+                            </p>
+                        </td>
+                    </tr>
+                    
+                    <!-- Footer -->
+                    <tr>
+                        <td style="background-color: #f9fafb; padding: 30px; border-radius: 0 0 16px 16px; text-align: center;">
+                            <p style="color: #9ca3af; font-size: 12px; margin: 0 0 10px 0;">
+                                Email ini dikirim otomatis oleh Workradar. Mohon jangan membalas email ini.
+                            </p>
+                            <p style="color: #9ca3af; font-size: 12px; margin: 0;">
+                                © 2026 Workradar. All rights reserved.
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>
+`
+
+	// Parse template
+	tmpl, err := template.New("verification").Parse(htmlTemplate)
+	if err != nil {
+		return fmt.Errorf("failed to parse email template: %w", err)
+	}
+
+	// Execute template with data
+	var body bytes.Buffer
+	data := struct {
+		Code string
+	}{
+		Code: code,
+	}
+	if err := tmpl.Execute(&body, data); err != nil {
+		return fmt.Errorf("failed to execute email template: %w", err)
+	}
+
+	// Send email via Resend
+	return s.sendViaResend(toEmail, subject, body.String())
+}
+
+// SendVerificationCode - DEPRECATED: Use SendPasswordResetCode or SendAccountVerificationCode instead
+func (s *EmailService) SendVerificationCode(toEmail, code string) error {
+	// For backward compatibility, determine type by code length
+	if len(code) == 4 {
+		return s.SendAccountVerificationCode(toEmail, code)
+	}
+	return s.SendPasswordResetCode(toEmail, code)
 }
 
 // SendWelcomeEmail sends welcome email to new users

@@ -137,11 +137,11 @@ func (s *AuthService) LoginWithMFA(email, password string) (*LoginResult, error)
 		// Increment failed login attempts
 		s.userRepo.IncrementFailedLogin(user.ID)
 
-		// Lock account after 5 failed attempts
-		if user.FailedLoginAttempts >= 4 { // Will be 5 after increment
-			lockUntil := time.Now().Add(30 * time.Minute)
+		// Lock account after 10 failed attempts (increased from 5)
+		if user.FailedLoginAttempts >= 9 { // Will be 10 after increment
+			lockUntil := time.Now().Add(1 * time.Minute) // Reduced from 30 min to 1 min for testing
 			s.userRepo.LockAccount(user.ID, &lockUntil)
-			return nil, errors.New("too many failed attempts. Account locked for 30 minutes")
+			return nil, errors.New("too many failed attempts. Account locked for 1 minute")
 		}
 
 		return nil, errors.New("invalid email or password")
@@ -205,8 +205,8 @@ func (s *AuthService) ForgotPassword(email string) (string, error) {
 		return "", errors.New("user not found")
 	}
 
-	// Generate 6-digit code
-	code := utils.GenerateVerificationCode()
+	// Generate 6-digit code for password reset
+	code := utils.Generate6DigitCode()
 
 	// Create password reset record
 	reset := &models.PasswordReset{
@@ -221,8 +221,8 @@ func (s *AuthService) ForgotPassword(email string) (string, error) {
 		return "", err
 	}
 
-	// Send verification code via email
-	if err := s.emailService.SendVerificationCode(email, code); err != nil {
+	// Send verification code via email (6 digit for password reset)
+	if err := s.emailService.SendPasswordResetCode(email, code); err != nil {
 		log.Printf("⚠️ Failed to send verification email: %v", err)
 		// Don't return error - still allow development mode where email isn't configured
 	}
@@ -349,8 +349,8 @@ func (s *AuthService) SendVerificationOTP(email string) (string, error) {
 		s.emailVerificationRepo.DeleteByEmail(email)
 	}
 
-	// Generate 6-digit code
-	code := utils.GenerateVerificationCode()
+	// Generate 4-digit code for account verification
+	code := utils.Generate4DigitCode()
 
 	// Create email verification record
 	verification := &models.EmailVerification{
@@ -367,8 +367,8 @@ func (s *AuthService) SendVerificationOTP(email string) (string, error) {
 		}
 	}
 
-	// Send verification code via email
-	if err := s.emailService.SendVerificationCode(email, code); err != nil {
+	// Send verification code via email (4 digit for account verification)
+	if err := s.emailService.SendAccountVerificationCode(email, code); err != nil {
 		log.Printf("⚠️ Failed to send verification email: %v", err)
 		// Don't return error - still allow development mode where email isn't configured
 	}

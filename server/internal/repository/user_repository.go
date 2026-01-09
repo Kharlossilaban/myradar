@@ -175,7 +175,7 @@ func (r *UserRepository) UnlockAccount(userID string) error {
 		}).Error
 }
 
-// UpdateLastLogin updates last login timestamp and IP
+// UpdateLastLogin updates last login timestamp and IP, resets lock status
 func (r *UserRepository) UpdateLastLogin(userID, ip string) error {
 	now := time.Now()
 	return r.db.Model(&models.User{}).
@@ -184,6 +184,7 @@ func (r *UserRepository) UpdateLastLogin(userID, ip string) error {
 			"last_login_at":         now,
 			"last_login_ip":         ip,
 			"failed_login_attempts": 0,
+			"locked_until":          nil,
 		}).Error
 }
 
