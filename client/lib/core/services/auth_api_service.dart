@@ -8,7 +8,9 @@ class AuthApiService {
   final ApiClient _apiClient = ApiClient();
 
   /// Register new user
-  Future<AuthResponse> register({
+  /// REVISED: Does NOT auto-login. Returns registration response.
+  /// User must verify email via OTP before they can login.
+  Future<RegisterResponse> register({
     required String email,
     required String username,
     required String password,
@@ -20,13 +22,52 @@ class AuthApiService {
       );
 
       if (response.statusCode == 201) {
-        final authResponse = AuthResponse.fromJson(response.data);
-        await _saveAuthData(authResponse);
-        return authResponse;
+        return RegisterResponse.fromJson(response.data);
       }
 
       throw ApiException(
         message: response.data['error'] ?? 'Registration failed',
+        statusCode: response.statusCode,
+      );
+    } on DioException catch (e) {
+      throw ApiException.fromDioException(e);
+    }
+  }
+
+  /// Verify email with OTP code
+  Future<void> verifyEmail({required String code}) async {
+    try {
+      final response = await _apiClient.post(
+        '/auth/verify-email',
+        data: {'code': code},
+      );
+
+      if (response.statusCode != 200) {
+        throw ApiException(
+          message: response.data['error'] ?? 'Verification failed',
+          statusCode: response.statusCode,
+        );
+      }
+    } on DioException catch (e) {
+      throw ApiException.fromDioException(e);
+    }
+  }
+
+  /// Resend verification OTP
+  Future<String?> resendVerificationOTP({required String email}) async {
+    try {
+      final response = await _apiClient.post(
+        '/auth/resend-otp',
+        data: {'email': email},
+      );
+
+      if (response.statusCode == 200) {
+        // Return code in dev mode for testing
+        return response.data['code'];
+      }
+
+      throw ApiException(
+        message: response.data['error'] ?? 'Failed to resend OTP',
         statusCode: response.statusCode,
       );
     } on DioException catch (e) {
@@ -238,4 +279,28 @@ class UserData {
   }
 
   bool get isVip => userType == 'vip';
+}
+
+/// Register Response model (without token - requires email verification)
+class RegisterResponse {
+  final String message;
+  final UserData? user;
+  final bool requiresVerification;
+  final String? code; // Dev mode only
+
+  RegisterResponse({
+    required this.message,
+    this.user,
+    this.requiresVerification = true,
+    this.code,
+  });
+
+  factory RegisterResponse.fromJson(Map<String, dynamic> json) {
+    return RegisterResponse(
+      message: json['message'] ?? '',
+      user: json['user'] != null ? UserData.fromJson(json['user']) : null,
+      requiresVerification: json['requires_verification'] ?? true,
+      code: json['code'],
+    );
+  }
 }

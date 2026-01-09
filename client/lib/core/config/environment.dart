@@ -9,7 +9,7 @@ class AppConfig {
   // - development: Local testing dengan emulator/real device
   // - staging: Testing server (jika ada)
   // - production: Live production server
-  static const Environment _env = Environment.development;
+  static const Environment _env = Environment.production;
 
   // ============================================================
   // DEVELOPMENT IP CONFIGURATION
@@ -39,7 +39,7 @@ class AppConfig {
         return 'https://staging-api.workradar.app/api';
 
       case Environment.production:
-        return 'https://api.workradar.app/api';
+        return 'https://workradar-production.up.railway.app/api';
     }
   }
 
@@ -51,7 +51,7 @@ class AppConfig {
       case Environment.staging:
         return 'https://staging-api.workradar.app';
       case Environment.production:
-        return 'https://api.workradar.app';
+        return 'https://workradar-production.up.railway.app';
     }
   }
 

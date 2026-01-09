@@ -213,23 +213,6 @@ class SecureApiClient {
     // For now, return the DER as-is (simplified)
     return data.sublist(0, 32);
   }
-
-  /// Load bundled certificate
-  Future<SecurityContext> _loadBundledCertificate() async {
-    final context = SecurityContext.defaultContext;
-
-    try {
-      final certData = await rootBundle.load(
-        CertificatePinningConfig.bundledCertificatePath,
-      );
-      context.setTrustedCertificatesBytes(certData.buffer.asUint8List());
-      debugPrint('✅ Bundled certificate loaded');
-    } catch (e) {
-      debugPrint('⚠️ Failed to load bundled certificate: $e');
-    }
-
-    return context;
-  }
 }
 
 /// Security Interceptor for additional security measures

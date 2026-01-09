@@ -7,6 +7,7 @@ import '../../../core/services/auth_api_service.dart';
 import '../../../core/services/google_auth_service.dart';
 import '../../../core/network/api_exception.dart';
 import '../../main/screens/main_screen.dart';
+import 'registration_otp_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -44,7 +45,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
       try {
         // Call API register
-        await _authApiService.register(
+        final response = await _authApiService.register(
           email: _gmailController.text.trim(),
           username: _usernameController.text.trim(),
           password: _passwordController.text,
@@ -53,17 +54,24 @@ class _RegisterScreenState extends State<RegisterScreen> {
         setState(() => _isLoading = false);
 
         if (mounted) {
-          // Navigate to Main Screen (auto-login after register)
+          // REVISED: Navigate to OTP Verification Screen instead of MainScreen
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => const MainScreen()),
+            MaterialPageRoute(
+              builder: (context) => RegistrationOtpScreen(
+                email: _gmailController.text.trim(),
+                devCode: response.code, // Pass dev code for testing
+              ),
+            ),
           );
 
-          // Show success message
+          // Show info message
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Registrasi berhasil! Selamat datang!'),
-              backgroundColor: Colors.green,
+              content: Text(
+                'Registrasi berhasil! Silakan verifikasi email Anda.',
+              ),
+              backgroundColor: Colors.blue,
             ),
           );
         }
