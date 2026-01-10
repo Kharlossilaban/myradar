@@ -122,51 +122,53 @@ class _TaskInputModalState extends State<TaskInputModal> {
         color: backgroundColor,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      child: Padding(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Handle bar
-            Container(
-              width: 40,
-              height: 4,
-              margin: const EdgeInsets.symmetric(vertical: 12),
-              decoration: BoxDecoration(
-                color: handleBarColor,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-
-            // Input field
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: TextField(
-                controller: _titleController,
-                autofocus: true,
-                decoration: InputDecoration(
-                  hintText: 'Membuat tugas baru di sini',
-                  hintStyle: TextStyle(color: hintColor),
-                  border: InputBorder.none,
-                  contentPadding: EdgeInsets.zero,
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Handle bar
+              Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.symmetric(vertical: 12),
+                decoration: BoxDecoration(
+                  color: handleBarColor,
+                  borderRadius: BorderRadius.circular(2),
                 ),
-                style: TextStyle(fontSize: 16, color: textColor),
-                textCapitalization: TextCapitalization.sentences,
               ),
-            ),
 
-            Divider(height: 1, color: dividerColor),
+              // Input field
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: TextField(
+                  controller: _titleController,
+                  autofocus: true,
+                  decoration: InputDecoration(
+                    hintText: 'Membuat tugas baru di sini',
+                    hintStyle: TextStyle(color: hintColor),
+                    border: InputBorder.none,
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                  style: TextStyle(fontSize: 16, color: textColor),
+                  textCapitalization: TextCapitalization.sentences,
+                ),
+              ),
 
-            // Action row - wrapped in SingleChildScrollView to prevent overflow
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
+              Divider(height: 1, color: dividerColor),
+
+              // Action row - wrapped in SingleChildScrollView to prevent overflow
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
                     // Category dropdown
                     PopupMenuButton<String>(
                       offset: const Offset(0, 40),
@@ -361,7 +363,8 @@ class _TaskInputModalState extends State<TaskInputModal> {
               ),
             ),
           ),
-          ],
+            ],
+          ),
         ),
       ),
     );
