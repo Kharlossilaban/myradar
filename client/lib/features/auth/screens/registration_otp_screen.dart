@@ -64,9 +64,10 @@ class _RegistrationOtpScreenState extends State<RegistrationOtpScreen> {
       setState(() => _isLoading = true);
 
       try {
-        // Sanitize OTP input
-        final code = OtpValidator.clean(_codeController.text);
-        await _authApiService.verifyEmail(code: code);
+        // Sanitize OTP input and add REG- prefix for backend
+        final codeInput = OtpValidator.clean(_codeController.text);
+        final formattedCode = 'REG-$codeInput';
+        await _authApiService.verifyEmail(code: formattedCode);
 
         setState(() => _isLoading = false);
 

@@ -74,7 +74,7 @@ class _LoginScreenState extends State<LoginScreen> {
           if (e.message.toLowerCase().contains('email not verified') ||
               e.message.toLowerCase().contains('verify your email')) {
             final email = GmailValidator.normalize(_gmailController.text);
-            
+
             // Request new verification OTP
             try {
               await _authApiService.resendVerificationOTP(email: email);
@@ -84,7 +84,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
-                content: Text('Email belum diverifikasi. Kode verifikasi telah dikirim.'),
+                content: Text(
+                  'Email belum diverifikasi. Kode verifikasi telah dikirim.',
+                ),
                 backgroundColor: Colors.orange,
               ),
             );
