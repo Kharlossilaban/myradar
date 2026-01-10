@@ -11,7 +11,7 @@ type PasswordReset struct {
 	ID               string    `gorm:"type:varchar(36);primaryKey" json:"id"`
 	UserID           string    `gorm:"type:varchar(36);not null" json:"user_id"`
 	Email            string    `gorm:"type:varchar(255);not null;index:idx_email" json:"email"`
-	VerificationCode string    `gorm:"type:varchar(6);not null;index:idx_code" json:"verification_code"`
+	VerificationCode string    `gorm:"type:varchar(10);not null;index:idx_code" json:"verification_code"` // Updated for "PWD-XXXXXX" format
 	ExpiresAt        time.Time `gorm:"not null;index:idx_expires_at" json:"expires_at"`
 	Used             bool      `gorm:"default:false" json:"used"`
 	CreatedAt        time.Time `json:"created_at"`
