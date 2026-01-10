@@ -9,6 +9,7 @@ import '../../../core/network/api_exception.dart';
 import '../../../core/utils/gmail_validator.dart';
 import 'register_screen.dart';
 import 'forgot_password_screen.dart';
+import 'registration_otp_screen.dart';
 import '../../main/screens/main_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -69,10 +70,38 @@ class _LoginScreenState extends State<LoginScreen> {
         setState(() => _isLoading = false);
 
         if (mounted) {
-          // Show error message from API
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(e.message), backgroundColor: Colors.red),
-          );
+          // Check if email not verified - redirect to OTP verification
+          if (e.message.toLowerCase().contains('email not verified') ||
+              e.message.toLowerCase().contains('verify your email')) {
+            final email = GmailValidator.normalize(_gmailController.text);
+            
+            // Request new verification OTP
+            try {
+              await _authApiService.resendVerificationOTP(email: email);
+            } catch (_) {
+              // Ignore error, still navigate to verification screen
+            }
+
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Email belum diverifikasi. Kode verifikasi telah dikirim.'),
+                backgroundColor: Colors.orange,
+              ),
+            );
+
+            // Navigate to registration OTP screen
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => RegistrationOtpScreen(email: email),
+              ),
+            );
+          } else {
+            // Show error message from API
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(e.message), backgroundColor: Colors.red),
+            );
+          }
         }
       } catch (e) {
         setState(() => _isLoading = false);

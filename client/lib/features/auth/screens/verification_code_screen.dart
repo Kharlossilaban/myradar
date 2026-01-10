@@ -5,6 +5,8 @@ import 'package:iconsax/iconsax.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/custom_button.dart';
 import '../../../core/utils/otp_validator.dart';
+import '../../../core/services/auth_api_service.dart';
+import '../../../core/network/api_exception.dart';
 import 'reset_password_screen.dart';
 
 class VerificationCodeScreen extends StatefulWidget {
@@ -20,6 +22,8 @@ class _VerificationCodeScreenState extends State<VerificationCodeScreen> {
   final _formKey = GlobalKey<FormState>();
   final _codeController = TextEditingController();
   bool _isLoading = false;
+
+  final _authService = AuthApiService();
 
   // Cooldown timer for resend
   int _resendCooldown = 0;
@@ -55,26 +59,29 @@ class _VerificationCodeScreenState extends State<VerificationCodeScreen> {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
 
-      // OTP is already sanitized by inputFormatters
-      // final code = OtpValidator.clean(_codeController.text);
-
-      // Simulate API call to verify code
-      await Future.delayed(const Duration(seconds: 1));
+      // Get code input and format as PWD-XXXXXX for backend
+      final codeInput = _codeController.text.trim();
+      final formattedCode = 'PWD-$codeInput';
 
       setState(() => _isLoading = false);
 
       if (mounted) {
+        // Navigate to reset password screen with the code
+        // The actual validation will happen when user submits new password
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => ResetPasswordScreen(gmail: widget.gmail),
+            builder: (context) => ResetPasswordScreen(
+              gmail: widget.gmail,
+              verificationCode: formattedCode,
+            ),
           ),
         );
       }
     }
   }
 
-  void _handleResendCode() {
+  void _handleResendCode() async {
     if (_resendCooldown > 0) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -85,15 +92,39 @@ class _VerificationCodeScreenState extends State<VerificationCodeScreen> {
       return;
     }
 
-    // TODO: Call resend API
-    _startCooldown();
+    try {
+      // Call backend API to resend reset code
+      await _authService.forgotPassword(widget.gmail);
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Kode verifikasi telah dikirim ulang!'),
-        backgroundColor: AppTheme.successColor,
-      ),
-    );
+      _startCooldown();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Kode verifikasi telah dikirim ulang!'),
+            backgroundColor: AppTheme.successColor,
+          ),
+        );
+      }
+    } on ApiException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.message),
+            backgroundColor: AppTheme.errorColor,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Gagal mengirim ulang kode. Silakan coba lagi.'),
+            backgroundColor: AppTheme.errorColor,
+          ),
+        );
+      }
+    }
   }
 
   @override

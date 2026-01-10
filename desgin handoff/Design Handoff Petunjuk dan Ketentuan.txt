@@ -1,0 +1,163 @@
+Praktikum Minggu 7 – Dokumen Handoff Aplikasi
+Contoh Design Handoff - <silahkan dibuat dengan studi kasus PBL masingmasing, namun wajib melengkapi dengan gambar pada setiap poin praktikum>
+
+Design Handoff Document – Aplikasi Perekrutan Tenaga Kerja
+Online
+Project Overview
+Project Name
+
+JobConnect – Aplikasi Perekrutan Tenaga
+Kerja Online
+
+Version / Date
+
+v1.0 – 13 Oktober 2025
+
+Designer
+
+Anisa Rahmawati
+
+Developer(s)
+
+Tim DevTech Studio
+
+Product Manager
+
+Rizky Pratama
+
+Design Tool
+
+Figma
+
+Design File Link
+
+https://www.figma.com/file/jobconnect2025
+
+1. Design Intent & Context
+Problem Statement: Banyak pencari kerja kesulitan menemukan lowongan yang sesuai
+dengan keterampilan mereka, sementara perusahaan juga kesulitan menyeleksi kandidat
+secara efisien.
+Design Goal: Mempermudah proses pencarian, seleksi, dan perekrutan tenaga kerja secara
+online yang cepat dan transparan.
+Key User Flow / Scenario: Pengguna membuat profil → mengunggah CV → mencari
+lowongan → melamar pekerjaan → HR menyeleksi → wawancara online.
+
+2. Visual Specifications
+Primary Color:#0056B3 (biru kepercayaan)
+Secondary Color: #F2F5FA (abu lembut)
+Accent Color: #FFD233 (kuning highlight)
+Typography:
+- Heading: Plus Jakarta Sans Bold (20–24pt)
+
+- Body: Plus Jakarta Sans Regular (14–16pt)
+Icon Style: Linear icons (Lucide)
+Image Style: Foto profesional, latar netral.
+
+Interactive Behavior
+Button: Hover → perubahan warna menjadi #004099, shadow lembut.
+Filter Bar: Dropdown dengan animasi fade.
+Modal Interview: Muncul dengan animasi slide dari bawah.
+Notification: Toast muncul selama 3 detik di pojok kanan atas.
+
+4. Component States
+Button State: Default, Hover, Disabled.
+Form Input: Focus border biru (#0056B3), Error border merah (#FF4C4C).
+Card Job List: Hover menaikkan shadow +5dp.
+Loading Skeleton: Placeholder abu muda dengan animasi shimmer.
+
+5. Form Rules & Data Validation
+Form Registrasi:
+- Email wajib format valid
+- Password minimal 8 karakter (kombinasi huruf dan angka)
+- Nomor telepon harus angka 10–13 digit
+Pesan Error:
+- 'Email tidak valid'
+- 'Password terlalu pendek'
+- 'Nomor telepon wajib diisi'
+
+6. Error, Empty & Loading States
+Error State: 'Terjadi kesalahan jaringan. Coba lagi nanti.'
+Empty State (Lowongan): Ilustrasi dan teks 'Belum ada lowongan yang cocok dengan filter
+Anda.'
+Loading: Skeleton list + spinner biru di tengah layar.
+
+7. User Flow / Navigation
+Main Flow:
+1. Splash Screen → Login/Sign Up
+2. Dashboard (Job Feed)
+3. Detail Pekerjaan
+4. Apply Job
+5. Chat HR / Interview
+6. Status Lamaran
+Navigation: Bottom navigation dengan 4 ikon (Home, Search, Chat, Profile).
+
+8. Responsive Design Breakpoints
+Mobile (≤600px): Stack layout vertikal.
+Tablet (601–1024px): Grid 2 kolom.
+Desktop (≥1025px): Grid 3 kolom + sidebar filter di kiri.
+
+9. Accessibility Notes
+Kontras Warna: Minimum rasio 4.5:1.
+Alt Text: Setiap gambar dan ikon memiliki alt text deskriptif.
+Keyboard Navigation: Semua tombol dapat diakses via tab.
+Area Sentuh: Minimum 48x48px.
+
+10. Design Rationale (Why)
+Pemilihan warna biru merepresentasikan profesionalisme dan kepercayaan. Struktur UI
+menyerupai aplikasi media sosial agar mudah dipahami pengguna baru. Penggunaan Plus
+Jakarta Sans karena tampil modern dan mudah dibaca di berbagai perangkat.
+
+11. Assets Delivery
+Aset Tersedia di Folder Drive: https://drive.google.com/jobconnect-assets
+- Logo (.svg, .png)
+- Icon set (Lucide)
+- Ilustrasi (PNG 1x, 2x)
+- Font family (Plus Jakarta Sans)
+- Warna palet dalam .fig file
+
+12. Developer Notes & Handoff Summary
+Semua komponen mengikuti sistem grid 8pt. Gunakan Tailwind CSS untuk spacing dan font.
+Prototipe sudah mengandung transisi standar untuk animasi (duration 200–400ms).
+Pastikan konsistensi antar halaman sesuai Figma style guide.
+
+13. Collaboration & Review
+Reviewer: Rizky Pratama (PM), Dwi Yanto (Frontend Dev)
+Tanggal Review: 10–12 Oktober 2025
+Umpan Balik: Desain responsif disetujui, minor revisi pada warna hover tombol.
+
+Checklist Handoff Selesai
+File desain rapi dan terorganisir
+Spesifikasi lengkap
+Aset siap pakai
+Prototipe interaktif tersedia
+Dokumentasi 'why' dan 'how' jelas
+Developer walkthrough
+ Menjelaskan desain yang sudah dibuat di Figma/Sketch
+ Menunjukkan layout, button states, spacing, interaksi, animasi,
+dan responsivitas
+
+✅
+✅
+✅
+✅
+✅
+✅
+
+
+
+
+Memberikan akses ke asset dan style guide
+Developer bisa bertanya: "Bagaimana animasi ini bekerja di
+mobile?" atau "State saat loading bagaimana?"
+
+Checklist Handoff Selesai Kontribusi Individu Kelompok PBL
+1. Silahkan dibagi tampilan aplikasi untuk tiap anggota dalam kelompok PBL yang
+sama, setiap individu bertanggung jawab pada tiap tampilannya untuk melengkapi
+poin desain handoff diatas
+2. Meskipun dikerjakan secara individu, dokumen dibuat urut dan konsisten dalam 1
+project Bersama. Dikumpulkan oleh ketua kelompok
+3. Lama pengerjaan sampai Praktikum ATS sesuai pengumuman oleh jurusan IF
+4. Buat sebaik-baiknya, karena tugas ini akan sekaligus menjadi dokumen yang akan
+dikumpulkan sebagai penilaian Tugas dan ATS Praktikum
+
+

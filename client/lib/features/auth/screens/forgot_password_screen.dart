@@ -3,6 +3,8 @@ import 'package:iconsax/iconsax.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/custom_button.dart';
 import '../../../core/utils/gmail_validator.dart';
+import '../../../core/services/auth_api_service.dart';
+import '../../../core/network/api_exception.dart';
 import 'verification_code_screen.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
@@ -17,6 +19,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   final _gmailController = TextEditingController();
   bool _isLoading = false;
 
+  final _authService = AuthApiService();
+
   @override
   void dispose() {
     _gmailController.dispose();
@@ -27,21 +31,54 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
 
-      // Sanitize input
-      final email = GmailValidator.normalize(_gmailController.text);
+      try {
+        // Sanitize input
+        final email = GmailValidator.normalize(_gmailController.text);
 
-      // Simulate API call
-      await Future.delayed(const Duration(seconds: 1));
+        // Call backend API to send reset code
+        await _authService.forgotPassword(email);
 
-      setState(() => _isLoading = false);
+        setState(() => _isLoading = false);
 
-      if (mounted) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => VerificationCodeScreen(gmail: email),
-          ),
-        );
+        if (mounted) {
+          // Show success message
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Kode reset password telah dikirim ke email Anda!'),
+              backgroundColor: AppTheme.successColor,
+            ),
+          );
+
+          // Navigate to verification screen
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => VerificationCodeScreen(gmail: email),
+            ),
+          );
+        }
+      } on ApiException catch (e) {
+        setState(() => _isLoading = false);
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(e.message),
+              backgroundColor: AppTheme.errorColor,
+            ),
+          );
+        }
+      } catch (e) {
+        setState(() => _isLoading = false);
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Terjadi kesalahan. Silakan coba lagi.'),
+              backgroundColor: AppTheme.errorColor,
+            ),
+          );
+        }
       }
     }
   }

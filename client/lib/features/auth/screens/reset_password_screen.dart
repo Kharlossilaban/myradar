@@ -2,12 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:iconsax/iconsax.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/custom_button.dart';
+import '../../../core/services/auth_api_service.dart';
+import '../../../core/network/api_exception.dart';
 import 'login_screen.dart';
 
 class ResetPasswordScreen extends StatefulWidget {
   final String gmail;
+  final String verificationCode;
 
-  const ResetPasswordScreen({super.key, required this.gmail});
+  const ResetPasswordScreen({
+    super.key,
+    required this.gmail,
+    required this.verificationCode,
+  });
 
   @override
   State<ResetPasswordScreen> createState() => _ResetPasswordScreenState();
@@ -20,6 +27,8 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
   bool _isLoading = false;
+  
+  final _authService = AuthApiService();
 
   @override
   void dispose() {
@@ -32,23 +41,50 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
 
-      // Simulate API call
-      await Future.delayed(const Duration(seconds: 1));
-
-      setState(() => _isLoading = false);
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Password berhasil diubah!'),
-            backgroundColor: AppTheme.successColor,
-          ),
+      try {
+        // Call backend API to reset password with verification code
+        await _authService.resetPassword(
+          code: widget.verificationCode,
+          newPassword: _passwordController.text,
         );
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(builder: (context) => const LoginScreen()),
-          (route) => false,
-        );
+
+        setState(() => _isLoading = false);
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Password berhasil diubah!'),
+              backgroundColor: AppTheme.successColor,
+            ),
+          );
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (context) => const LoginScreen()),
+            (route) => false,
+          );
+        }
+      } on ApiException catch (e) {
+        setState(() => _isLoading = false);
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(e.message),
+              backgroundColor: AppTheme.errorColor,
+            ),
+          );
+        }
+      } catch (e) {
+        setState(() => _isLoading = false);
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Gagal mengubah password. Silakan coba lagi.'),
+              backgroundColor: AppTheme.errorColor,
+            ),
+          );
+        }
       }
     }
   }

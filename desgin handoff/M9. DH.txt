@@ -1,0 +1,107 @@
+Design Handoff
+
+What is a design handoff?
+• Handoff desain adalah titik dalam proses pengembangan produk di
+mana pengembang menerapkan desain yang telah selesai. Untuk
+memastikan handoff berjalan sukses, kolaborasi yang baik antara
+desainer dan pengembang sangat penting.
+UX DESIGNER/
+PRODUC DESIGNER
+
+DEVELOPER
+
+Pada desain handoff, ada beberapa hal atau prototipe yang perlu
+diperhatikan untuk memastikan proses berjalan lancar:
+1. Dokumentasi Lengkap: Sertakan semua spesifikasi desain,
+termasuk ukuran, warna, tipografi, dan elemen antarmuka
+2. Prototipe Interaktif: Buat prototipe interaktif yang menggambarkan
+alur pengguna dan fungsi aplikasi, sehingga pengembang bisa
+memahami interaksi yang diinginkan.
+3. Komunikasi yang Jelas: Pastikan ada saluran komunikasi terbuka
+antara desainer dan pengembang untuk menjawab pertanyaan dan
+mengatasi masalah yang muncul.
+
+4. Akses ke Asset Desain: Berikan akses mudah ke semua aset desain,
+seperti ikon, gambar, dan font, dalam format yang sesuai.
+5. Konsistensi dalam Desain: Pastikan bahwa semua elemen desain
+konsisten dengan panduan gaya dan standar yang telah ditetapkan.
+6. Feedback Loop: Sediakan mekanisme untuk umpan balik dari
+pengembang terkait tantangan yang dihadapi selama implementasi.
+7. Prioritas Fitur: Tentukan fitur mana yang harus diprioritaskan untuk
+pengembangan awal, agar fokus pada elemen yang paling penting
+terlebih dahulu.
+
+Bentuk Preview
+
+https://www.figma.com/
+
+Beri penjelasan Screen Flow pada prototype
+
+https://www.figma.com/
+
+Perhatikan Desain pada lingkungan
+pengembangan contoh Design pada iOS
+
+https://www.figma.com/
+
+Design iOS (2)
+
+https://www.figma.com/
+
+Perhatikan Desain pada lingkungan
+pengembangan contoh Design pada Android
+
+https://www.figma.com/
+
+Design Android
+
+https://www.figma.com/
+
+Anda dapat memperkenalkan elemen Anda pada anatomy dari aplikasi.
+Nama-nama yang telah didefinisikan di atas dapat disebutkan
+selanjutnya.
+https://www.figma.com/
+
+Before and Now
+
+https://www.figma.com/
+
+UI Characteristics
+
+https://www.figma.com/
+
+UI Characteristics (2)
+
+https://www.figma.com/
+
+https://www.figma.com/
+
+https://www.figma.com/
+
+https://www.figma.com/
+
+https://www.figma.com/
+
+https://www.figma.com/
+
+Animation & Transition
+
+https://www.figma.com/
+
+Animation & Transition
+
+https://www.figma.com/
+
+Referensi
+• Kholmatova, Alla. Design Systems.
+• Gothelf, Jeff, dan Josh Seiden. Lean UX: Applying Lean Principles to Improve
+User Experience.
+• Knapp, Jake. The Design Sprint: How to Solve Big Problems and Test New
+Ideas in Just Five Days.
+• Brown, Dan M. Communicating Design: Developing Web Site
+Documentation for Design and Development.
+• Nielsen Norman Group. “Design Handoff: Best Practices for Collaboration.”
+• Medium. “A Comprehensive Guide to Design Handoff.”
+• https://www.figma.com
+
+
