@@ -6,6 +6,7 @@ import '../../../core/widgets/google_sign_in_button.dart';
 import '../../../core/services/auth_api_service.dart';
 import '../../../core/services/google_auth_service.dart';
 import '../../../core/network/api_exception.dart';
+import '../../../core/utils/gmail_validator.dart';
 import '../../main/screens/main_screen.dart';
 import 'registration_otp_screen.dart';
 
@@ -44,11 +45,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
       setState(() => _isLoading = true);
 
       try {
+        // Sanitize inputs
+        final email = GmailValidator.normalize(_gmailController.text);
+        final username = _usernameController.text.trim();
+        final password = _passwordController.text;
+
         // Call API register
         final response = await _authApiService.register(
-          email: _gmailController.text.trim(),
-          username: _usernameController.text.trim(),
-          password: _passwordController.text,
+          email: email,
+          username: username,
+          password: password,
         );
 
         setState(() => _isLoading = false);
@@ -249,15 +255,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       color: AppTheme.textLight,
                     ),
                   ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Gmail tidak boleh kosong';
-                    }
-                    if (!value.contains('@')) {
-                      return 'Gmail tidak valid';
-                    }
-                    return null;
-                  },
+                  validator: GmailValidator.validate,
                 ),
 
                 const SizedBox(height: 20),

@@ -1,9 +1,12 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:iconsax/iconsax.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/custom_button.dart';
 import '../../../core/services/auth_api_service.dart';
 import '../../../core/network/api_exception.dart';
+import '../../../core/utils/otp_validator.dart';
 import 'login_screen.dart';
 
 /// Screen for verifying email OTP after registration
@@ -25,16 +28,35 @@ class _RegistrationOtpScreenState extends State<RegistrationOtpScreen> {
   bool _isResending = false;
   String? _currentDevCode;
 
+  // Cooldown timer for resend
+  int _resendCooldown = 0;
+  Timer? _cooldownTimer;
+
   @override
   void initState() {
     super.initState();
     _currentDevCode = widget.devCode;
+    // Start initial cooldown after receiving OTP
+    _startCooldown();
   }
 
   @override
   void dispose() {
     _codeController.dispose();
+    _cooldownTimer?.cancel();
     super.dispose();
+  }
+
+  void _startCooldown() {
+    setState(() => _resendCooldown = 60);
+    _cooldownTimer?.cancel();
+    _cooldownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (_resendCooldown > 0) {
+        setState(() => _resendCooldown--);
+      } else {
+        timer.cancel();
+      }
+    });
   }
 
   void _handleVerifyCode() async {
@@ -42,7 +64,9 @@ class _RegistrationOtpScreenState extends State<RegistrationOtpScreen> {
       setState(() => _isLoading = true);
 
       try {
-        await _authApiService.verifyEmail(code: _codeController.text.trim());
+        // Sanitize OTP input
+        final code = OtpValidator.clean(_codeController.text);
+        await _authApiService.verifyEmail(code: code);
 
         setState(() => _isLoading = false);
 
@@ -86,12 +110,26 @@ class _RegistrationOtpScreenState extends State<RegistrationOtpScreen> {
   }
 
   void _handleResendCode() async {
+    // Check cooldown
+    if (_resendCooldown > 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Tunggu $_resendCooldown detik untuk kirim ulang'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
     setState(() => _isResending = true);
 
     try {
       final code = await _authApiService.resendVerificationOTP(
         email: widget.email,
       );
+
+      // Start cooldown after successful resend
+      _startCooldown();
 
       setState(() {
         _isResending = false;
@@ -225,7 +263,7 @@ class _RegistrationOtpScreenState extends State<RegistrationOtpScreen> {
 
                 // Code Field
                 Text(
-                  'Kode Verifikasi',
+                  'Kode Verifikasi (Registrasi)',
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.w600,
                     color: AppTheme.textPrimary,
@@ -236,6 +274,11 @@ class _RegistrationOtpScreenState extends State<RegistrationOtpScreen> {
                   controller: _codeController,
                   keyboardType: TextInputType.number,
                   textAlign: TextAlign.center,
+                  maxLength: 6,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.digitsOnly,
+                    LengthLimitingTextInputFormatter(6),
+                  ],
                   style: const TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
@@ -243,6 +286,7 @@ class _RegistrationOtpScreenState extends State<RegistrationOtpScreen> {
                   ),
                   decoration: InputDecoration(
                     hintText: '000000',
+                    counterText: '', // Hide counter
                     hintStyle: TextStyle(
                       color: AppTheme.textLight.withValues(alpha: 0.5),
                       letterSpacing: 8,
@@ -252,15 +296,7 @@ class _RegistrationOtpScreenState extends State<RegistrationOtpScreen> {
                       color: AppTheme.textLight,
                     ),
                   ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Kode tidak boleh kosong';
-                    }
-                    if (value.length < 6) {
-                      return 'Kode harus 6 digit';
-                    }
-                    return null;
-                  },
+                  validator: OtpValidator.validate,
                 ),
 
                 const SizedBox(height: 32),

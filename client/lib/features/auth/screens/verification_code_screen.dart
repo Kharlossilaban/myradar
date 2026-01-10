@@ -1,11 +1,14 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:iconsax/iconsax.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/custom_button.dart';
+import '../../../core/utils/otp_validator.dart';
 import 'reset_password_screen.dart';
 
 class VerificationCodeScreen extends StatefulWidget {
-  final String gmail; // Renamed for standard naming
+  final String gmail;
 
   const VerificationCodeScreen({super.key, required this.gmail});
 
@@ -18,15 +21,42 @@ class _VerificationCodeScreenState extends State<VerificationCodeScreen> {
   final _codeController = TextEditingController();
   bool _isLoading = false;
 
+  // Cooldown timer for resend
+  int _resendCooldown = 0;
+  Timer? _cooldownTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    // Start initial cooldown after receiving OTP
+    _startCooldown();
+  }
+
   @override
   void dispose() {
     _codeController.dispose();
+    _cooldownTimer?.cancel();
     super.dispose();
+  }
+
+  void _startCooldown() {
+    setState(() => _resendCooldown = 60);
+    _cooldownTimer?.cancel();
+    _cooldownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (_resendCooldown > 0) {
+        setState(() => _resendCooldown--);
+      } else {
+        timer.cancel();
+      }
+    });
   }
 
   void _handleVerifyCode() async {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
+
+      // OTP is already sanitized by inputFormatters
+      // final code = OtpValidator.clean(_codeController.text);
 
       // Simulate API call to verify code
       await Future.delayed(const Duration(seconds: 1));
@@ -42,6 +72,28 @@ class _VerificationCodeScreenState extends State<VerificationCodeScreen> {
         );
       }
     }
+  }
+
+  void _handleResendCode() {
+    if (_resendCooldown > 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Tunggu $_resendCooldown detik untuk kirim ulang'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    // TODO: Call resend API
+    _startCooldown();
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Kode verifikasi telah dikirim ulang!'),
+        backgroundColor: AppTheme.successColor,
+      ),
+    );
   }
 
   @override
@@ -90,7 +142,7 @@ class _VerificationCodeScreenState extends State<VerificationCodeScreen> {
 
                 Center(
                   child: Text(
-                    'Masukkan kode verifikasi yang telah dikirim ke\n${widget.gmail}',
+                    'Masukkan kode 6 digit yang telah dikirim ke\n${widget.gmail}',
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
@@ -100,7 +152,7 @@ class _VerificationCodeScreenState extends State<VerificationCodeScreen> {
 
                 // Code Field
                 Text(
-                  'Kode Verifikasi',
+                  'Kode Verifikasi (Reset Password)',
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.w600,
                     color: AppTheme.textPrimary,
@@ -111,13 +163,19 @@ class _VerificationCodeScreenState extends State<VerificationCodeScreen> {
                   controller: _codeController,
                   keyboardType: TextInputType.number,
                   textAlign: TextAlign.center,
+                  maxLength: 6,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.digitsOnly,
+                    LengthLimitingTextInputFormatter(6),
+                  ],
                   style: const TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
                     letterSpacing: 8,
                   ),
                   decoration: InputDecoration(
-                    hintText: '0000',
+                    hintText: '000000',
+                    counterText: '', // Hide counter
                     hintStyle: TextStyle(
                       color: AppTheme.textLight.withValues(alpha: 0.5),
                       letterSpacing: 8,
@@ -127,15 +185,7 @@ class _VerificationCodeScreenState extends State<VerificationCodeScreen> {
                       color: AppTheme.textLight,
                     ),
                   ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Kode tidak boleh kosong';
-                    }
-                    if (value.length < 4) {
-                      return 'Kode minimal 4 digit';
-                    }
-                    return null;
-                  },
+                  validator: OtpValidator.validate,
                 ),
 
                 const SizedBox(height: 32),
@@ -149,7 +199,7 @@ class _VerificationCodeScreenState extends State<VerificationCodeScreen> {
 
                 const SizedBox(height: 24),
 
-                // Resend Code
+                // Resend Code with cooldown
                 Center(
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -159,20 +209,15 @@ class _VerificationCodeScreenState extends State<VerificationCodeScreen> {
                         style: TextStyle(color: AppTheme.textSecondary),
                       ),
                       GestureDetector(
-                        onTap: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text(
-                                'Kode verifikasi telah dikirim ulang!',
-                              ),
-                              backgroundColor: AppTheme.successColor,
-                            ),
-                          );
-                        },
-                        child: const Text(
-                          'Kirim Ulang',
+                        onTap: _handleResendCode,
+                        child: Text(
+                          _resendCooldown > 0
+                              ? 'Kirim Ulang ($_resendCooldown s)'
+                              : 'Kirim Ulang',
                           style: TextStyle(
-                            color: AppTheme.primaryColor,
+                            color: _resendCooldown > 0
+                                ? AppTheme.textLight
+                                : AppTheme.primaryColor,
                             fontWeight: FontWeight.w600,
                           ),
                         ),

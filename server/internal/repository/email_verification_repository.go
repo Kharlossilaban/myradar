@@ -52,6 +52,11 @@ func (r *EmailVerificationRepository) MarkAsUsed(id string) error {
 		Update("used", true).Error
 }
 
+// Update updates an email verification record (for failed attempts tracking)
+func (r *EmailVerificationRepository) Update(verification *models.EmailVerification) error {
+	return r.db.Save(verification).Error
+}
+
 // DeleteByEmail menghapus semua verification untuk email tertentu
 func (r *EmailVerificationRepository) DeleteByEmail(email string) error {
 	return r.db.Where("email = ?", email).

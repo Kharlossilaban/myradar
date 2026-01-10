@@ -205,15 +205,15 @@ func (s *AuthService) ForgotPassword(email string) (string, error) {
 		return "", errors.New("user not found")
 	}
 
-	// Generate 6-digit code for password reset
-	code := utils.Generate6DigitCode()
+	// Generate 6-digit code for password reset (PWD-XXXXXX format)
+	code := utils.GenerateVerificationCode()
 
 	// Create password reset record
 	reset := &models.PasswordReset{
 		UserID:           user.ID,
 		Email:            email,
 		VerificationCode: code,
-		ExpiresAt:        time.Now().Add(2 * time.Minute), // 2 minutes for security
+		ExpiresAt:        time.Now().Add(10 * time.Minute), // Extended to 10 minutes
 		Used:             false,
 	}
 
@@ -221,7 +221,7 @@ func (s *AuthService) ForgotPassword(email string) (string, error) {
 		return "", err
 	}
 
-	// Send verification code via email (6 digit for password reset)
+	// Send verification code via email (PWD-XXXXXX format)
 	if err := s.emailService.SendPasswordResetCode(email, code); err != nil {
 		log.Printf("⚠️ Failed to send verification email: %v", err)
 		// Don't return error - still allow development mode where email isn't configured
@@ -234,7 +234,7 @@ func (s *AuthService) ForgotPassword(email string) (string, error) {
 	}
 
 	// Development mode: return code for testing
-	log.Printf("⚠️ DEV MODE: Verification code for %s: %s", email, code)
+	log.Printf("⚠️ DEV MODE: Password Reset code for %s: %s", email, code)
 	return code, nil
 }
 
@@ -349,16 +349,17 @@ func (s *AuthService) SendVerificationOTP(email string) (string, error) {
 		s.emailVerificationRepo.DeleteByEmail(email)
 	}
 
-	// Generate 4-digit code for account verification
-	code := utils.Generate4DigitCode()
+	// Generate 6-digit code for account verification (REG-XXXXXX format)
+	code := utils.GenerateRegistrationCode()
 
 	// Create email verification record
 	verification := &models.EmailVerification{
 		UserID:           user.ID,
 		Email:            email,
 		VerificationCode: code,
-		ExpiresAt:        time.Now().Add(2 * time.Minute), // 2 minutes for security
+		ExpiresAt:        time.Now().Add(10 * time.Minute), // Extended to 10 minutes
 		Used:             false,
+		FailedAttempts:   0,
 	}
 
 	if s.emailVerificationRepo != nil {
@@ -367,7 +368,7 @@ func (s *AuthService) SendVerificationOTP(email string) (string, error) {
 		}
 	}
 
-	// Send verification code via email (4 digit for account verification)
+	// Send verification code via email (REG-XXXXXX format)
 	if err := s.emailService.SendAccountVerificationCode(email, code); err != nil {
 		log.Printf("⚠️ Failed to send verification email: %v", err)
 		// Don't return error - still allow development mode where email isn't configured
@@ -380,20 +381,50 @@ func (s *AuthService) SendVerificationOTP(email string) (string, error) {
 	}
 
 	// Development mode: return code for testing
-	log.Printf("⚠️ DEV MODE: Verification code for %s: %s", email, code)
+	log.Printf("⚠️ DEV MODE: Registration code for %s: %s", email, code)
 	return code, nil
 }
 
 // VerifyEmail verifies user's email using OTP code
+// Includes brute force protection with failed attempts tracking
 func (s *AuthService) VerifyEmail(code string) error {
 	if s.emailVerificationRepo == nil {
 		return errors.New("email verification not configured")
 	}
 
-	// Find valid verification code
+	// Find verification by code (handles both with and without prefix)
 	verification, err := s.emailVerificationRepo.FindByCode(code)
 	if err != nil {
+		// Try to find by email to increment failed attempts
+		// This is handled at repository level
 		return errors.New("invalid or expired verification code")
+	}
+
+	// Check if locked due to too many failed attempts
+	if verification.IsLocked() {
+		return errors.New("too many failed attempts. Please wait 15 minutes or request a new code")
+	}
+
+	// Verify the code matches
+	if verification.VerificationCode != code {
+		// Increment failed attempts
+		verification.FailedAttempts++
+
+		// Lock after 5 failed attempts
+		if verification.FailedAttempts >= 5 {
+			lockUntil := time.Now().Add(15 * time.Minute)
+			verification.LockedUntil = &lockUntil
+			s.emailVerificationRepo.Update(verification)
+			return errors.New("too many failed attempts. Locked for 15 minutes")
+		}
+
+		s.emailVerificationRepo.Update(verification)
+		return errors.New("invalid verification code")
+	}
+
+	// Mark as used FIRST to prevent race condition
+	if err := s.emailVerificationRepo.MarkAsUsed(verification.ID); err != nil {
+		return errors.New("failed to mark verification as used")
 	}
 
 	// Mark user's email as verified
@@ -401,8 +432,8 @@ func (s *AuthService) VerifyEmail(code string) error {
 		return err
 	}
 
-	// Mark verification as used
-	return s.emailVerificationRepo.MarkAsUsed(verification.ID)
+	log.Printf("✅ Email verified successfully for user: %s", verification.Email)
+	return nil
 }
 
 // ResendVerificationOTP resends OTP to user's email

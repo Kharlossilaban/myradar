@@ -140,6 +140,45 @@ func (v *InputValidator) ValidateEmail(email, fieldName string) *InputValidator 
 	return v
 }
 
+// ValidateGmail validates Gmail format specifically (must be @gmail.com domain)
+func (v *InputValidator) ValidateGmail(email, fieldName string) *InputValidator {
+	email = strings.TrimSpace(strings.ToLower(email))
+	if email == "" {
+		v.AddError(fieldName, "REQUIRED", "Gmail is required")
+		return v
+	}
+
+	// Max length
+	if len(email) > 254 {
+		v.AddError(fieldName, "TOO_LONG", "Gmail must not exceed 254 characters")
+		return v
+	}
+
+	// Must be @gmail.com domain
+	if !strings.HasSuffix(email, "@gmail.com") {
+		v.AddError(fieldName, "INVALID_DOMAIN", "Must use @gmail.com domain")
+		return v
+	}
+
+	// Gmail format: alphanumeric and dots, min 6 chars max 30 chars before @gmail.com
+	gmailRegex := regexp.MustCompile(`^[a-z0-9][a-z0-9\.]{4,28}[a-z0-9]@gmail\.com$`)
+	if !gmailRegex.MatchString(email) {
+		v.AddError(fieldName, "INVALID_FORMAT", "Invalid Gmail format")
+	}
+
+	// Check for consecutive dots
+	if strings.Contains(email, "..") {
+		v.AddError(fieldName, "INVALID_FORMAT", "Gmail cannot have consecutive dots")
+	}
+
+	// Check for SQL injection
+	if hasSQLInjection, _ := ContainsSQLInjection(email); hasSQLInjection {
+		v.AddError(fieldName, "SECURITY", "Gmail contains invalid characters")
+	}
+
+	return v
+}
+
 // ValidateName validates name input
 func (v *InputValidator) ValidateName(name, fieldName string) *InputValidator {
 	name = strings.TrimSpace(name)

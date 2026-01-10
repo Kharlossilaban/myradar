@@ -6,6 +6,7 @@ import '../../../core/widgets/google_sign_in_button.dart';
 import '../../../core/services/auth_api_service.dart';
 import '../../../core/services/google_auth_service.dart';
 import '../../../core/network/api_exception.dart';
+import '../../../core/utils/gmail_validator.dart';
 import 'register_screen.dart';
 import 'forgot_password_screen.dart';
 import '../../main/screens/main_screen.dart';
@@ -40,11 +41,12 @@ class _LoginScreenState extends State<LoginScreen> {
       setState(() => _isLoading = true);
 
       try {
+        // Sanitize inputs
+        final email = GmailValidator.normalize(_gmailController.text);
+        final password = _passwordController.text;
+
         // Call API login
-        await _authApiService.login(
-          email: _gmailController.text.trim(),
-          password: _passwordController.text,
-        );
+        await _authApiService.login(email: email, password: password);
 
         setState(() => _isLoading = false);
 
@@ -223,15 +225,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       color: AppTheme.textLight,
                     ),
                   ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Gmail tidak boleh kosong';
-                    }
-                    if (!value.contains('@')) {
-                      return 'Gmail tidak valid';
-                    }
-                    return null;
-                  },
+                  validator: GmailValidator.validate,
                 ),
 
                 const SizedBox(height: 20),

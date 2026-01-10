@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:iconsax/iconsax.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/custom_button.dart';
+import '../../../core/utils/gmail_validator.dart';
 import 'verification_code_screen.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
@@ -26,6 +27,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
 
+      // Sanitize input
+      final email = GmailValidator.normalize(_gmailController.text);
+
       // Simulate API call
       await Future.delayed(const Duration(seconds: 1));
 
@@ -35,8 +39,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) =>
-                VerificationCodeScreen(gmail: _gmailController.text),
+            builder: (context) => VerificationCodeScreen(gmail: email),
           ),
         );
       }
