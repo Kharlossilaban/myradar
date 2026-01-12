@@ -54,11 +54,12 @@ func NewPaymentService(
 }
 
 // CreateSnapToken creates a transaction and returns Snap Token
-func (s *PaymentService) CreateSnapToken(userID string, planType models.PlanType) (string, string, error) {
+// CreateSnapToken creates a transaction and returns Snap Token, Redirect URL, and Order ID
+func (s *PaymentService) CreateSnapToken(userID string, planType models.PlanType) (string, string, string, error) {
 	// 1. Validate User
 	user, err := s.userRepo.FindByID(userID)
 	if err != nil {
-		return "", "", errors.New("user not found")
+	return "", "", "", errors.New("user not found")
 	}
 
 	// 2. Determine Amount
@@ -71,7 +72,7 @@ func (s *PaymentService) CreateSnapToken(userID string, planType models.PlanType
 		amount = models.PriceYearly
 		planName = "Workradar VIP (Yearly)"
 	} else {
-		return "", "", errors.New("invalid plan type")
+	return "", "", "", errors.New("invalid plan type")
 	}
 
 	// 3. Generate Order ID
@@ -105,7 +106,7 @@ func (s *PaymentService) CreateSnapToken(userID string, planType models.PlanType
 	snapResp, err := s.snapClient.CreateTransaction(req)
 	if err != nil {
 		log.Printf("Midtrans Error: %v", err)
-		return "", "", errors.New("payment gateway error")
+		return "", "", "", errors.New("payment gateway error")
 	}
 
 	// 6. Save Transaction to DB
@@ -119,10 +120,10 @@ func (s *PaymentService) CreateSnapToken(userID string, planType models.PlanType
 	}
 
 	if err := s.transactionRepo.Create(trx); err != nil {
-		return "", "", err
+		return "", "", "", err
 	}
 
-	return snapResp.Token, snapResp.RedirectURL, nil
+	return snapResp.Token, snapResp.RedirectURL, orderID, nil
 }
 
 // HandleNotification processes Midtrans webhook
