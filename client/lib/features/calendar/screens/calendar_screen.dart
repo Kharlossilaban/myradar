@@ -556,6 +556,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
                         task: task,
                         onTap: () {
                           final taskProvider = context.read<TaskProvider>();
+                          final workloadProvider = context
+                              .read<WorkloadProvider>();
                           final scaffoldMessenger = ScaffoldMessenger.of(
                             context,
                           );
