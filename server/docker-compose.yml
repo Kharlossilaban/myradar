@@ -1,0 +1,71 @@
+# Docker Compose untuk Workradar - Tugas Semester
+# Service: MySQL Database + Go Backend API
+
+services:
+  # ============================================
+  # MYSQL DATABASE
+  # ============================================
+  mysql:
+    image: mysql:8.0
+    container_name: workradar-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: workradar_root_2024
+      MYSQL_DATABASE: workradar
+      MYSQL_USER: workradar_user
+      MYSQL_PASSWORD: workradar_password_2024
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - workradar-network
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # ============================================
+  # GO BACKEND API
+  # ============================================
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: workradar-api
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      - PORT=8080
+      - ENV=development
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_USER=workradar_user
+      - DB_PASSWORD=workradar_password_2024
+      - DB_NAME=workradar
+      - JWT_SECRET=workradar-docker-secret-key-2024
+      - JWT_EXPIRY=24h
+      - ALLOWED_ORIGINS=*
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - workradar-network
+
+# ============================================
+# NETWORKS
+# ============================================
+networks:
+  workradar-network:
+    driver: bridge
+    name: workradar-network
+
+# ============================================
+# VOLUMES
+# ============================================
+volumes:
+  mysql_data:
+    name: workradar-mysql-data
