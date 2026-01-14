@@ -60,13 +60,13 @@ func NewPaymentService(
 	}
 }
 
-// CreateSnapToken creates a transaction and returns Snap Token
 // CreateSnapToken creates a transaction and returns Snap Token, Redirect URL, and Order ID
 func (s *PaymentService) CreateSnapToken(userID string, planType models.PlanType) (string, string, string, error) {
 	// 1. Validate User
 	user, err := s.userRepo.FindByID(userID)
 	if err != nil {
-	return "", "", "", errors.New("user not found")
+		log.Printf("Error finding user %s: %v", userID, err)
+		return "", "", "", errors.New("user not found")
 	}
 
 	// 2. Determine Amount
@@ -79,7 +79,8 @@ func (s *PaymentService) CreateSnapToken(userID string, planType models.PlanType
 		amount = models.PriceYearly
 		planName = "Workradar VIP (Yearly)"
 	} else {
-	return "", "", "", errors.New("invalid plan type")
+		log.Printf("Invalid plan type: %s", planType)
+		return "", "", "", errors.New("invalid plan type")
 	}
 
 	// 3. Generate Order ID
@@ -110,11 +111,20 @@ func (s *PaymentService) CreateSnapToken(userID string, planType models.PlanType
 	}
 
 	// 5. Request Snap Token
+	log.Printf("Creating Midtrans transaction for user %s, order %s, amount %.0f", userID, orderID, amount)
 	snapResp, err := s.snapClient.CreateTransaction(req)
 	if err != nil {
-		log.Printf("Midtrans Error: %v", err)
-		return "", "", "", errors.New("payment gateway error")
+		log.Printf("Midtrans CreateTransaction Error: %v", err)
+		log.Printf("Request details - OrderID: %s, Amount: %.0f, User: %s (%s)", orderID, amount, user.Username, user.Email)
+		return "", "", "", fmt.Errorf("payment gateway error: %v", err)
 	}
+	
+	if snapResp == nil {
+		log.Printf("Midtrans returned nil response for order %s", orderID)
+		return "", "", "", errors.New("payment gateway returned empty response")
+	}
+	
+	log.Printf("Midtrans transaction created successfully. Token: %s, OrderID: %s", snapResp.Token, orderID)
 
 	// 6. Save Transaction to DB
 	trx := &models.Transaction{
