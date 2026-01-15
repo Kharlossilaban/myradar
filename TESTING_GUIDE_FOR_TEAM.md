@@ -101,9 +101,31 @@
    ```
 
 2. **Webhook URL di Midtrans Dashboard:**
-   ```
-   https://your-railway-domain.up.railway.app/api/webhooks/midtrans
-   ```
+   
+   **Cara Setup Webhook Notification URL:**
+   
+   **Opsi 1 - Via Settings (Recommended):**
+   1. Login ke https://dashboard.midtrans.com/
+   2. Klik **SETTINGS** (⚙️ icon di sidebar bawah)
+   3. Pilih **SNAP PREFERENCES** atau **GENERAL SETTINGS**
+   4. Scroll ke bagian **Payment Notification URL** atau **Notification URL**
+   5. Masukkan: `https://your-railway-domain.up.railway.app/api/webhooks/midtrans`
+   6. Save
+   
+   **Opsi 2 - Via Access Keys (Alternative):**
+   1. Klik **SETTINGS** → **ACCESS KEYS**
+   2. Di halaman Access Keys, ada section **Notification URL**
+   3. Masukkan webhook URL
+   4. Save
+   
+   **Opsi 3 - Check di Payment/Transaction Settings:**
+   1. **SETTINGS** → **PAYMENT** 
+   2. Cari bagian **Notification URL** atau **HTTP Notification**
+   
+   **⚠️ PENTING:** 
+   - URL harus HTTPS (Railway sudah otomatis HTTPS)
+   - Format: `https://your-domain.up.railway.app/api/webhooks/midtrans`
+   - Test dengan sandbox mode dulu
 
 ### **Testing Steps:**
 

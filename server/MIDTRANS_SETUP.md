@@ -21,16 +21,43 @@ MIDTRANS_IS_PRODUCTION=false
 
 ### 3. Webhook Configuration
 
-Set Midtrans webhook URL in Dashboard → Settings → Configuration:
+**Cara Set Webhook Notification URL di Midtrans Dashboard:**
 
+**📍 Pilih salah satu lokasi berikut:**
+
+#### **Metode 1: SNAP PREFERENCES** (Recommended)
+1. Login ke https://dashboard.midtrans.com/
+2. Sidebar → Klik **SETTINGS** (⚙️ icon)
+3. Pilih **SNAP PREFERENCES**
+4. Scroll ke **Payment Notification URL**
+5. Masukkan: `https://your-railway-domain.up.railway.app/api/webhooks/midtrans`
+6. Save/Update
+
+#### **Metode 2: ACCESS KEYS**
+1. **SETTINGS** → **ACCESS KEYS**
+2. Cari section **Notification URL** atau **Webhook URL**
+3. Input webhook URL
+4. Save
+
+#### **Metode 3: PAYMENT Settings**
+1. **SETTINGS** → **PAYMENT**
+2. Cari **HTTP Notification** atau **Webhooks**
+3. Enable dan input URL
+
+**Production URL:**
 ```
 https://your-domain.com/api/webhooks/midtrans
 ```
 
-For local testing, use ngrok or similar:
+**For local testing, use ngrok or similar:**
 ```
 https://xxxx-xx-xx-xxx-xxx.ngrok.io/api/webhooks/midtrans
 ```
+
+**⚠️ Important:**
+- Must be HTTPS (not HTTP)
+- Must be publicly accessible
+- Test with sandbox mode first
 
 ## API Endpoints
 

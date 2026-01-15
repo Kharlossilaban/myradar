@@ -285,12 +285,35 @@ MYSQLDATABASE=railway                                # ✅ Auto
 
 **Setup di Midtrans Dashboard:**
 
+**📍 Lokasi Setup (pilih salah satu):**
+
+### **Opsi 1: Via SNAP PREFERENCES** ✅ (Recommended)
 1. Login ke https://dashboard.midtrans.com/
-2. Go to: **Settings → Configuration → Payment Notification URL**
-3. Set:
+2. Klik **SETTINGS** (⚙️ gear icon di sidebar)
+3. Pilih **SNAP PREFERENCES**
+4. Scroll ke bawah cari **Payment Notification URL**
+5. Masukkan:
    ```
    https://your-railway-domain.up.railway.app/api/webhooks/midtrans
    ```
+6. Klik **Update**
+
+### **Opsi 2: Via ACCESS KEYS**
+1. **SETTINGS** → **ACCESS KEYS**
+2. Di halaman Access Keys, cari section **Notification/Webhook URL**
+3. Masukkan webhook URL
+4. Save
+
+### **Opsi 3: Via PAYMENT Settings**
+1. **SETTINGS** → **PAYMENT**
+2. Cari **HTTP(S) Notification / Webhooks**
+3. Enable dan masukkan URL
+
+### **Verifikasi:**
+- ✅ URL harus dimulai dengan `https://`
+- ✅ Format: `https://domain.up.railway.app/api/webhooks/midtrans`
+- ✅ No trailing slash
+- ✅ Test dengan Send Test Notification (jika ada)
 
 ⚠️ **PENTING:** Webhook URL harus public accessible!
 
