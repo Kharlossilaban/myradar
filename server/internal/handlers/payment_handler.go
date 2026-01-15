@@ -47,24 +47,49 @@ func (h *PaymentHandler) GetSnapToken(c *fiber.Ctx) error {
 }
 
 // HandleNotification webhook midtrans
-// POST /api/payment/notification
+// POST /api/webhooks/midtrans
 func (h *PaymentHandler) HandleNotification(c *fiber.Ctx) error {
 	var notificationPayload map[string]interface{}
 
 	if err := c.BodyParser(&notificationPayload); err != nil {
-		log.Printf("Error parsing notification: %v", err)
+		log.Printf("❌ Error parsing notification: %v", err)
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "Invalid notification payload",
 		})
 	}
 
-	// Process notification in background / service
+	// Extract required fields for signature verification
+	orderID, orderIDOK := notificationPayload["order_id"].(string)
+	statusCode, statusCodeOK := notificationPayload["status_code"].(string)
+	grossAmount, grossAmountOK := notificationPayload["gross_amount"].(string)
+	signatureKey, signatureKeyOK := notificationPayload["signature_key"].(string)
+
+	if !orderIDOK || !statusCodeOK || !grossAmountOK || !signatureKeyOK {
+		log.Printf("❌ Missing required fields in notification payload")
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Missing required fields",
+		})
+	}
+
+	// SECURITY: Verify signature from Midtrans
+	if !h.paymentService.VerifyNotificationSignature(orderID, statusCode, grossAmount, signatureKey) {
+		log.Printf("❌ Invalid signature for order: %s", orderID)
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "Invalid signature",
+		})
+	}
+
+	log.Printf("✅ Signature verified for order: %s", orderID)
+
+	// Process notification
 	if err := h.paymentService.HandleNotification(notificationPayload); err != nil {
-		log.Printf("Error handling notification: %v", err)
+		log.Printf("❌ Error handling notification: %v", err)
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "Failed to process notification",
 		})
 	}
+
+	log.Printf("✅ Webhook processed successfully for order: %s", orderID)
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"status": "OK",

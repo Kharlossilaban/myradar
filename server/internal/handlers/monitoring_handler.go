@@ -251,7 +251,7 @@ func (h *MonitoringHandler) RunVulnerabilityScan(c *fiber.Ctx) error {
 	userID := c.Locals("userID")
 	if userID != nil {
 		userIDStr := userID.(string)
-		details := fmt.Sprintf("Vulnerability scan completed. Type: %s, Risk Score: %.1f, Vulnerabilities: %d",
+		details := fmt.Sprintf("Vulnerability scan completed. Type: %s, Risk Score: %d, Vulnerabilities: %d",
 			result.ScanType, result.RiskScore, len(result.Vulnerabilities))
 		h.auditLogService.LogSecurityEvent(
 			models.SecurityEventType("VULNERABILITY_SCAN_RUN"),

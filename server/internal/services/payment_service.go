@@ -1,11 +1,13 @@
 package services
 
 import (
+	"crypto/sha512"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"log"
-	"time"
 
+	"github.com/google/uuid"
 	"github.com/midtrans/midtrans-go"
 	"github.com/midtrans/midtrans-go/coreapi"
 	"github.com/midtrans/midtrans-go/snap"
@@ -83,9 +85,8 @@ func (s *PaymentService) CreateSnapToken(userID string, planType models.PlanType
 		return "", "", "", errors.New("invalid plan type")
 	}
 
-	// 3. Generate Order ID
-	// Use timestamp + random for unique ID
-	orderID := "ORDER-" + userID[:8] + "-" + fmt.Sprintf("%d", time.Now().UnixNano())
+	// 3. Generate Order ID with UUID (prevent collision)
+	orderID := "ORDER-" + uuid.New().String()
 
 	// 4. Create Snap Request
 	req := &snap.Request{
@@ -119,8 +120,8 @@ func (s *PaymentService) CreateSnapToken(userID string, planType models.PlanType
 		return "", "", "", fmt.Errorf("payment gateway error: %v", err)
 	}
 	
-	if snapResp == nil {
-		log.Printf("Midtrans returned nil response for order %s", orderID)
+	if snapResp.Token == "" {
+		log.Printf("Midtrans returned empty token for order %s", orderID)
 		return "", "", "", errors.New("payment gateway returned empty response")
 	}
 	
@@ -151,24 +152,34 @@ func (s *PaymentService) HandleNotification(notificationPayload map[string]inter
 		return errors.New("invalid notification payload")
 	}
 
-	// 2. Check Transaction Status from Midtrans
+	log.Printf("📨 Processing webhook for order: %s", orderID)
+
+	// 2. Find Transaction in DB first (for idempotency check)
+	trx, errRepo := s.transactionRepo.FindByOrderID(orderID)
+	if errRepo != nil {
+		log.Printf("❌ Transaction not found in DB: %s", orderID)
+		return errRepo
+	}
+
+	// 3. IDEMPOTENCY CHECK: Skip if already settled
+	if trx.Status == models.TransactionStatusSettlement {
+		log.Printf("⏭️  Transaction %s already settled, skipping webhook processing", orderID)
+		return nil // Return OK so Midtrans doesn't retry
+	}
+
+	// 4. Check Transaction Status from Midtrans
 	transactionStatusResp, err := s.apiClient.CheckTransaction(orderID)
 	if err != nil {
+		log.Printf("❌ Error checking transaction with Midtrans: %v", err)
 		return err
 	}
 
 	if transactionStatusResp == nil {
+		log.Printf("❌ Transaction not found in Midtrans: %s", orderID)
 		return errors.New("transaction not found")
 	}
 
-	// 3. Find Transaction in DB
-	// 3. Find Transaction in DB
-	trx, errRepo := s.transactionRepo.FindByOrderID(orderID)
-	if errRepo != nil {
-		return errRepo
-	}
-
-	// 4. Update Status based on Midtrans Response
+	// 5. Update Status based on Midtrans Response
 	var status models.TransactionStatus
 	transactionStatus := transactionStatusResp.TransactionStatus
 	fraudStatus := transactionStatusResp.FraudStatus
@@ -191,12 +202,14 @@ func (s *PaymentService) HandleNotification(notificationPayload map[string]inter
 		status = models.TransactionStatusPending
 	}
 
+	log.Printf("💳 Transaction %s status: %s → %s", orderID, transactionStatus, status)
+
 	// Update transaction status
 	if err := s.transactionRepo.UpdateStatus(orderID, status); err != nil {
 		return err
 	}
 
-	// 5. If Success (Settlement), Activate Subscription & Send Success Message
+	// 6. If Success (Settlement), Activate Subscription & Send Success Message
 	if status == models.TransactionStatusSettlement {
 		log.Printf("Payment success for order: %s. Upgrading user...", orderID)
 
@@ -266,4 +279,27 @@ func (s *PaymentService) CancelTransaction(orderID string) error {
 // GetTransactionByOrderID retrieves a transaction by order ID
 func (s *PaymentService) GetTransactionByOrderID(orderID string) (*models.Transaction, error) {
 	return s.transactionRepo.FindByOrderID(orderID)
+}
+
+// VerifyNotificationSignature verifies the signature from Midtrans webhook
+// This prevents fake webhook attacks
+func (s *PaymentService) VerifyNotificationSignature(
+	orderID string,
+	statusCode string,
+	grossAmount string,
+	signatureKey string,
+) bool {
+	// Midtrans signature formula: SHA512(order_id + status_code + gross_amount + server_key)
+	input := orderID + statusCode + grossAmount + config.AppConfig.MidtransServerKey
+	hash := sha512.Sum512([]byte(input))
+	calculatedSignature := hex.EncodeToString(hash[:])
+	
+	isValid := calculatedSignature == signatureKey
+	if !isValid {
+		log.Printf("❌ Invalid signature for order %s. Expected: %s, Got: %s", 
+			orderID, calculatedSignature[:32]+"...", signatureKey[:32]+"...")
+	} else {
+		log.Printf("✅ Valid signature for order %s", orderID)
+	}
+	return isValid
 }
